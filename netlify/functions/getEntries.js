@@ -15,9 +15,10 @@ export async function handler(event, context) {
 
     const data = rows.map(r => ({
       date: r.Date,
-      description: r.Description,
-      amount: r.Amount,
       type: r.Type,
+      mode: r.Mode,
+      amount: r.Amount,
+      remarks: r.Remarks,
     }));
 
     return {
