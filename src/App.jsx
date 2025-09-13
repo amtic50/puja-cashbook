@@ -9,15 +9,19 @@ function App() {
     amount: "",
     remarks: ""
   });
+  const [error, setError] = useState(null); // Added for UI feedback
 
   // Fetch entries from Google Sheets
   const fetchEntries = async () => {
     try {
       const res = await fetch("/.netlify/functions/getEntries");
+      if (!res.ok) throw new Error("Failed to fetch entries");
       const data = await res.json();
       setEntries(data);
+      setError(null);
     } catch (err) {
       console.error("Error fetching entries:", err);
+      setError("Could not load entries. Please try again.");
     }
   };
 
@@ -29,16 +33,17 @@ function App() {
   // Submit new entry
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.amount || !form.date) {
-      alert("Please fill date and amount");
+    if (!form.amount || !form.date || parseFloat(form.amount) <= 0) {
+      alert("Please enter a valid date and positive amount");
       return;
     }
     try {
-      await fetch("/.netlify/functions/addEntry", {
+      const res = await fetch("/.netlify/functions/addEntry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (!res.ok) throw new Error("Failed to add entry");
       setForm({
         date: "",
         type: "Donation",
@@ -47,8 +52,10 @@ function App() {
         remarks: ""
       });
       fetchEntries(); // refresh
+      setError(null);
     } catch (err) {
       console.error("Error adding entry:", err);
+      setError("Could not add entry. Please check your connection.");
     }
   };
 
@@ -72,6 +79,8 @@ function App() {
       <h1 className="text-2xl font-bold mb-4">
         APDCL Vishwakarma Puja Cashbook — 2025
       </h1>
+
+      {error && <p className="text-red-600 mb-4">{error}</p>}
 
       {/* Form */}
       <form
@@ -111,6 +120,7 @@ function App() {
           onChange={handleChange}
           placeholder="Amount"
           className="p-2 border rounded"
+          min="1" // Added for positive amounts
           required
         />
         <input
@@ -131,9 +141,9 @@ function App() {
 
       {/* Summary */}
       <div className="mt-6 p-4 bg-white rounded-xl shadow">
-        <p><b>Total Donations:</b> ₹{totalDonations}</p>
-        <p><b>Total Expenses:</b> ₹{totalExpenses}</p>
-        <p><b>Closing Balance:</b> ₹{closingBalance}</p>
+        <p><b>Total Donations:</b> ₹{totalDonations.toFixed(2)}</p>
+        <p><b>Total Expenses:</b> ₹{totalExpenses.toFixed(2)}</p>
+        <p><b>Closing Balance:</b> ₹{closingBalance.toFixed(2)}</p>
       </div>
 
       {/* Table */}
