@@ -1,7 +1,7 @@
-const { GoogleSpreadsheet } = require('google-spreadsheet');
-const { JWT } = require('google-auth-library');
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { JWT } from 'google-auth-library';
 
-exports.handler = async function(event) {
+export async function handler(event) {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -33,4 +33,4 @@ exports.handler = async function(event) {
     console.error('Error in addEntry:', err);
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
-};
+}
