@@ -1,4 +1,6 @@
 import { GoogleSpreadsheet } from "google-spreadsheet";
+console.log('google-spreadsheet version:', require('google-spreadsheet/package.json').version);  
+
 
 export async function handler(event, context) {
   try {
