@@ -1,7 +1,7 @@
-const { GoogleSpreadsheet } = require('google-spreadsheet');
-const { JWT } = require('google-auth-library');
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { JWT } from 'google-auth-library';
 
-exports.handler = async function(event, context) {
+export async function handler(event, context) {
   try {
     const auth = new JWT({
       email: process.env.GOOGLE_SERVICE_EMAIL,
@@ -34,4 +34,4 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ error: err.message, data: [] }),
     };
   }
-};
+}
