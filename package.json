@@ -1,18 +1,18 @@
 {
-  "name": "apdcl-vishwakarma-cashbook",
+  "name": "puja-cashbook",
   "version": "1.0.0",
-  "private": true,
   "scripts": {
-    "start": "vite",
-    "build": "vite build && cp -r index.html dist/ || true",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "google-spreadsheet": "^4.1.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "google-spreadsheet": "^4.1.1"
   },
   "devDependencies": {
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
   }
 }
