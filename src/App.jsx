@@ -1,86 +1,168 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState, useEffect } from "react";
 
-const API_GET = '/.netlify/functions/getEntries'
-const API_ADD = '/.netlify/functions/addEntry'
+function App() {
+  const [entries, setEntries] = useState([]);
+  const [form, setForm] = useState({
+    date: "",
+    type: "Donation",
+    mode: "Cash",
+    amount: "",
+    remarks: ""
+  });
 
-export default function App(){
-  const [entries, setEntries] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({ date: new Date().toISOString().slice(0,10), type: 'Donation', mode: 'Cash', particulars:'', amount:'', txn:'' , collectedBy: '' })
-  const [filterDate, setFilterDate] = useState('')
+  // Fetch entries from Google Sheets
+  const fetchEntries = async () => {
+    try {
+      const res = await fetch("/.netlify/functions/getEntries");
+      const data = await res.json();
+      setEntries(data);
+    } catch (err) {
+      console.error("Error fetching entries:", err);
+    }
+  };
 
-  useEffect(()=>{ fetchEntries() }, [])
+  // Handle form change
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  async function fetchEntries(){
-    setLoading(true)
-    try{
-      const res = await fetch(API_GET)
-      const data = await res.json()
-      setEntries(data.rows || [])
-    }catch(err){
-      console.error(err)
-      alert('Failed to fetch entries. Check functions and env variables.')
-    }finally{ setLoading(false) }
-  }
+  // Submit new entry
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.amount || !form.date) {
+      alert("Please fill date and amount");
+      return;
+    }
+    try {
+      await fetch("/.netlify/functions/addEntry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      setForm({
+        date: "",
+        type: "Donation",
+        mode: "Cash",
+        amount: "",
+        remarks: ""
+      });
+      fetchEntries(); // refresh
+    } catch (err) {
+      console.error("Error adding entry:", err);
+    }
+  };
 
-  async function handleAdd(e){
-    e.preventDefault()
-    if(!form.amount || Number(form.amount) <= 0) return alert('Enter valid amount')
-    const payload = { ...form }
-    setLoading(true)
-    try{
-      const res = await fetch(API_ADD, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
-      const r = await res.json()
-      if(r.success){
-        setForm({ date: new Date().toISOString().slice(0,10), type: 'Donation', mode: 'Cash', particulars:'', amount:'', txn:'', collectedBy: '' })
-        fetchEntries()
-      } else alert('Failed to add: ' + (r.error||'unknown'))
-    }catch(err){ console.error(err); alert('Failed to add entry') }
-    finally{ setLoading(false) }
-  }
+  useEffect(() => {
+    fetchEntries();
+  }, []);
 
-  function runningBalance(list){
-    let bal = 0
-    return list.map((row)=>{
-      const amt = Number(row.Amount || 0)
-      if(row.Type === 'Donation') bal += amt
-      else bal -= amt
-      return { ...row, balance: bal }
-    })
-  }
+  // Calculate totals
+  const totalDonations = entries
+    .filter((e) => e.type === "Donation")
+    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
 
-  const displayed = filterDate ? entries.filter(r=>r.Date === filterDate) : entries
-  const withBal = runningBalance(displayed)
+  const totalExpenses = entries
+    .filter((e) => e.type === "Expense")
+    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
 
-  const totals = displayed.reduce((acc,row)=>{
-    const amt = Number(row.Amount||0)
-    if(row.Type === 'Donation') { if(row.Mode==='Cash') acc.cashIn += amt; else acc.onlineIn += amt }
-    else { if(row.Mode==='Cash') acc.cashOut += amt; else acc.onlineOut += amt }
-    return acc
-  }, { cashIn:0, onlineIn:0, cashOut:0, onlineOut:0 })
-
-  function exportCSV(){
-    const cols = ['Date','Type','Mode','Particulars','Amount','Receipt/Txn ID','Collected By','Verified By']
-    const rows = entries.map(r => cols.map(c=> (r[c]||'') ) )
-    const csv = [cols.join(','), ...rows.map(r=> r.map(cell=> '"'+String(cell).replace(/"/g,'""')+'"').join(','))].join('\n')
-    const blob = new Blob([csv], { type:'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url; a.download = 'cashbook_entries.csv'; a.click();
-  }
+  const closingBalance = totalDonations - totalExpenses;
 
   return (
-    <div className="container">
-      <div className="header">
-        <div>
-          <h2>APDCL Vishwakarma Puja Cashbook — 2025</h2>
-          <small>Netlify + Google Sheets backend</small>
-        </div>
-        <div className="controls">
-          <button className="ghost" onClick={fetchEntries} disabled={loading}>Refresh</button>
-          <button className="ghost" onClick={exportCSV}>Export CSV</button>
-        </div>
+    <div className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">
+        APDCL Vishwakarma Puja Cashbook — 2025
+      </h1>
+
+      {/* Form */}
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-100 p-4 rounded-xl shadow"
+      >
+        <input
+          type="date"
+          name="date"
+          value={form.date}
+          onChange={handleChange}
+          className="p-2 border rounded"
+          required
+        />
+        <select
+          name="type"
+          value={form.type}
+          onChange={handleChange}
+          className="p-2 border rounded"
+        >
+          <option>Donation</option>
+          <option>Expense</option>
+        </select>
+        <select
+          name="mode"
+          value={form.mode}
+          onChange={handleChange}
+          className="p-2 border rounded"
+        >
+          <option>Cash</option>
+          <option>Online</option>
+        </select>
+        <input
+          type="number"
+          name="amount"
+          value={form.amount}
+          onChange={handleChange}
+          placeholder="Amount"
+          className="p-2 border rounded"
+          required
+        />
+        <input
+          type="text"
+          name="remarks"
+          value={form.remarks}
+          onChange={handleChange}
+          placeholder="Remarks"
+          className="p-2 border rounded col-span-2"
+        />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded col-span-2"
+        >
+          Add Entry
+        </button>
+      </form>
+
+      {/* Summary */}
+      <div className="mt-6 p-4 bg-white rounded-xl shadow">
+        <p><b>Total Donations:</b> ₹{totalDonations}</p>
+        <p><b>Total Expenses:</b> ₹{totalExpenses}</p>
+        <p><b>Closing Balance:</b> ₹{closingBalance}</p>
       </div>
-      {/* Form and Table omitted for brevity (same as provided earlier) */}
+
+      {/* Table */}
+      <div className="mt-6 overflow-x-auto">
+        <table className="w-full border">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="p-2 border">Date</th>
+              <th className="p-2 border">Type</th>
+              <th className="p-2 border">Mode</th>
+              <th className="p-2 border">Amount</th>
+              <th className="p-2 border">Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((e, i) => (
+              <tr key={i} className="text-center">
+                <td className="border p-1">{e.date}</td>
+                <td className="border p-1">{e.type}</td>
+                <td className="border p-1">{e.mode}</td>
+                <td className="border p-1">₹{e.amount}</td>
+                <td className="border p-1">{e.remarks}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  )
+  );
 }
+
+export default App;
