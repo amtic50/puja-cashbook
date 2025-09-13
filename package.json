@@ -8,7 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "google-spreadsheet": "^3.4.0",
+    "google-spreadsheet": "^4.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
