@@ -1,4 +1,5 @@
-import { GoogleSpreadsheet } from "google-spreadsheet";
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { JWT } from 'google-auth-library';
 
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
@@ -8,11 +9,13 @@ export async function handler(event) {
   try {
     const formData = JSON.parse(event.body);
 
-    const doc = new GoogleSpreadsheet(process.env.SHEET_ID);
-    await doc.useServiceAccountAuth({
-      client_email: process.env.GOOGLE_SERVICE_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    const auth = new JWT({
+      email: process.env.GOOGLE_SERVICE_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
+
+    const doc = new GoogleSpreadsheet(process.env.SHEET_ID, { auth });
 
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
@@ -27,7 +30,7 @@ export async function handler(event) {
 
     return { statusCode: 200, body: JSON.stringify({ message: "Entry added" }) };
   } catch (err) {
-    console.error(err);
+    console.error('Error in addEntry:', err);
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 }
