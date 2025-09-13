@@ -1,33 +1,33 @@
-const { GoogleSpreadsheet } = require('google-spreadsheet')
+import { GoogleSpreadsheet } from "google-spreadsheet";
 
-exports.handler = async function(event, context) {
-  if(event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' }
-  try{
-    const body = JSON.parse(event.body)
-    const SHEET_ID = process.env.SHEET_ID
-    const client_email = process.env.GOOGLE_SERVICE_EMAIL
-    const private_key = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
+export async function handler(event) {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method Not Allowed" };
+  }
 
-    const doc = new GoogleSpreadsheet(SHEET_ID)
-    await doc.useServiceAccountAuth({ client_email, private_key })
-    await doc.loadInfo()
-    const sheet = doc.sheetsByIndex[0]
+  try {
+    const formData = JSON.parse(event.body);
 
-    const row = {
-      Date: body.date || new Date().toISOString().slice(0,10),
-      Type: body.type || 'Donation',
-      Mode: body.mode || 'Cash',
-      Particulars: body.particulars || '',
-      Amount: body.amount || '',
-      'Receipt/Txn ID': body.txn || '',
-      'Collected By': body.collectedBy || '',
-      'Verified By': ''
-    }
+    const doc = new GoogleSpreadsheet(process.env.SHEET_ID);
+    await doc.useServiceAccountAuth({
+      client_email: process.env.GOOGLE_SERVICE_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    });
 
-    await sheet.addRow(row)
-    return { statusCode: 200, body: JSON.stringify({ success: true }) }
-  }catch(err){
-    console.error(err)
-    return { statusCode: 500, body: JSON.stringify({ success:false, error: String(err) }) }
+    await doc.loadInfo();
+    const sheet = doc.sheetsByIndex[0];
+
+    await sheet.addRow({
+      Date: formData.date,
+      Type: formData.type,
+      Mode: formData.mode,
+      Amount: formData.amount,
+      Remarks: formData.remarks,
+    });
+
+    return { statusCode: 200, body: JSON.stringify({ message: "Entry added" }) };
+  } catch (err) {
+    console.error(err);
+    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 }
