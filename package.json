@@ -1,19 +1,19 @@
 {
-  "name": "puja-cashbook",
-  "version": "1.0.0",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "google-spreadsheet": "^6.1.2",
-    "@googleapis/sheets": "^6.0.0"
-  },
-  "devDependencies": {
-    "vite": "^5.0.0",
-    "@vitejs/plugin-react": "^4.0.0"
-  }
+"name": "puja-cashbook",
+"version": "1.0.0",
+"scripts": {
+"dev": "vite",
+"build": "vite build",
+"preview": "vite preview"
+},
+"dependencies": {
+"react": "^18.3.1",
+"react-dom": "^18.3.1",
+"google-spreadsheet": "^5.0.2",
+"@googleapis/sheets": "^6.0.0"
+},
+"devDependencies": {
+"vite": "^5.0.0",
+"@vitejs/plugin-react": "^4.0.0"
+}
 }
